@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="outerDiv" style="padding: 50px; background-color: red;">Outer Div
+
+        <div id="innerDiv" style="padding: 50px; background-color: aliceblue;">İnner Div</div>
+    </div>
+    <script>
+        document.getElementById("outerDiv").addEventListener("click", function(){
+            alert("Outer Div Tıklandı!");
+        }, true);
+
+        document.getElementById("innerDiv").addEventListener("click", function(){
+            alert("Inner Div Tıklandı!");
+        })
+    </script>
+</body>
+</html>
