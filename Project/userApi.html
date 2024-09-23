@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Yönetimi</title>
+    <style>
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1{
+            text-align: center;
+        }
+        #user-list{
+            margin-bottom: 20px;
+        }
+        form{
+            display: flex;
+            flex-direction: column;
+        }
+        form input{
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        form button {
+            padding: 10px;
+            background-color: green;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #pagination{
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .page-link{
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+        }
+        #search-bar{
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        #search-bar input{
+            padding: 10px;
+            width: 300px;
+        }
+        .user-card{
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-card button{
+            background-color: red;
+            padding: 10px;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Kullanıcı Yönetim Sistemi</h1>
+
+    <div id="search-bar">
+        <input type="text" id="search-input" placeholder="Kullanıcı Ara">
+        <button onclick="searchUser()">ARA</button>
+    </div>
+
+    <div id="user-list">
+
+    </div>
+    <h2>Kullanıcı Ekle veya Güncelle</h2>
+    <form id="user-form">
+        <input type="text" id="name" placeholder="İsim" required>
+        <input type="email" id="email" placeholder="EPosta" required>
+        <button type="submit" id="submit-btn">Kullanıcı Ekle</button>
+        <input type="hidden" id="user-id">
+    </form>
+
+    <div id="pagination">
+        <span class="page-link" onclick="changePage('prev')">Prev</span>
+        <span class="page-link" onclick="changePage('next')">Next</span>
+    </div>
+
+    <script>
+        const apiURL = 'https://jsonplaceholder.typicode.com/users';
+
+        let users = [];
+        let currentPage = 1;
+        const usersPerPage = 5;
+
+        const userList = document.getElementById('user-list');
+        const userForm = document.getElementById('user-form');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const userIdInput = document.getElementById('user-id');
+
+        const fetchUsers = async () => {
+            const response = await fetch(apiURL);
+            users = await response.json();
+
+            displayUsers();
+        };
+
+        const displayUsers = () =>{
+            const start = (currentPage - 1) * usersPerPage;
+            const paginatedUsers = users.slice(start, start + usersPerPage);
+
+            userList.innerHTML = '';
+
+            paginatedUsers.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.classList.add('user-card');
+                userCard.innerHTML = `
+                    <div>
+                    <strong>${user.name}</strong> (${user.email})
+                    <button onclick="viewDetails(${user.id})">View Details</button>    
+                    <button onclick="editUser(${user.id})">Edit</button>  
+                    </div>  
+                    <button onclick="deleteUser(${user.id})">Delete</button>    
+                    
+                `;
+                userList.appendChild(userCard);
+            });
+        }
+
+        const searchUser = () =>{
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            const filteredUsers = users.filter(user=>user.name.toLowerCase().includes(searchInput));
+
+            userList.innerHTML = '';
+
+            filteredUsers.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.classList.add('user-card');
+                userCard.innerHTML = `
+                <div>
+                <strong>${user.name}</strong> (${user.email})
+                    <button onclick="viewDetails(${user.id})">View Details</button>    
+                    <button onclick="editUser(${user.id})">Edit</button>  
+                    </div>  
+                    <button onclick="deleteUser(${user.id})">Delete</button>    
+                    
+                </div>
+                `;
+                userList.appendChild(userCard);
+            });
+        }
+
+        const changePage = (direction) =>{
+            if(direction === 'next' && currentPage * usersPerPage < users.length){
+                currentPage++;
+            }else if(direction === 'prev' && currentPage > 1){
+                currentPage--;
+            }
+            displayUsers();
+        }
+
+        userForm.addEventListener('submit', async(e) =>{
+            e.preventDefault();
+
+            const name = nameInput.value;
+            const email = emailInput.value;
+            const userId = userIdInput.value;
+
+            if(userId){
+                const response = await fetch(`${apiURL}/${userId}`,{
+                    method: 'PUT',
+                    body: JSON.stringify({name, email}),
+                    headers: {'Content-Type': 'application/json'}
+                
+                });
+
+                const updatedUser = await response.json();
+
+                users = users.map(user => user.id ===updatedUser.id ? updatedUser : user);
+            }else{
+                const response = await fetch(apiURL,{
+                    method: 'POST',
+                    body: JSON.stringify({name, email}),
+                    headers: { 'Content-Type':'application/json'}
+                });
+
+                const newUser = await response.json();
+                users.push(newUser);
+            }
+            displayUsers();
+            nameInput.value = '';
+            emailInput.value = '';
+            userIdInput.value = '';
+            document.getElementById('submit-btn').innerHTML = 'Add User';
+        })
+
+        const editUser= (id) =>{
+            const user = users.find(user => user.id ===id);
+
+            nameInput.value = user.name;
+            emailInput.value = user.email;
+            userIdInput.value = user.id;
+            document.getElementById('submit-btn').innerHTML = 'Edit User';
+        }
+
+        const deleteUser = async(id) => {
+            await fetch(`${apiURL}/${id}`, {method: 'DELETE'});
+            users = users.filter(user=>user.id !== id);
+
+            displayUsers();
+        }
+
+        const viewDetails = (id) => {
+            const user = users.find(user => user.id === id);
+            alert(`User Detail: \name: ${user.name}\nEmail: ${user.email}`);
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchUsers);
+
+
+    </script>
+</body>
+</html>

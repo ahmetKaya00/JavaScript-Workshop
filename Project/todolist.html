@@ -73,6 +73,7 @@
             document.getElementById('todoList').appendChild(taskItem);
 
             document.getElementById('todoForm').reset();
+            sheduleReminder(taskInput,dueDate);
         }
 
         function completeTask(button){
@@ -94,6 +95,19 @@
 
         function deleteTask(button){
             button.closest('.todo-item').remove();
+        }
+
+        function sheduleReminder(task, dueDate){
+            const dueTime = new Date(dueDate).getTime();
+            const currentTime = new Date().getTime();
+
+            const timeout = dueTime - currentTime;
+
+            if(timeout > 0){
+                setTimeout(()=>{
+                    alert(`Görev Zamanı: ${task}`);
+                },timeout);
+            }
         }
     </script>
 </body>
